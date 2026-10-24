@@ -1,4 +1,5 @@
 #include "global.h"
+#include "teal_test.h"
 #include "battle.h"
 #include "battle_anim.h"
 #include "battle_arena.h"
@@ -3914,6 +3915,10 @@ u8 IsMonDisobedient(void)
 
     if (gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_RECORDED_LINK))
         return DISOBEDIENCE_OBEDIENT;
+#ifdef TEAL_TEST_BATTLE
+    if (TealArena_Active()) // arena: the mirrored trainer mons obey like the opponent's
+        return DISOBEDIENCE_OBEDIENT;
+#endif
     if (GetBattlerSide(gBattlerAttacker) == B_SIDE_OPPONENT)
         return DISOBEDIENCE_OBEDIENT;
 

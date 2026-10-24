@@ -1,5 +1,6 @@
 #include "global.h"
 #include "agent_mailbox.h"
+#include "teal_test.h"
 #include "battle.h"
 #include "battle_anim.h"
 #include "battle_ai_script_commands.h"
@@ -1957,6 +1958,15 @@ static void SpriteCB_UnusedBattleInit_Main(struct Sprite *sprite)
         break;
     }
 }
+
+#ifdef TEAL_TEST_BATTLE
+// Arena mirror matches: the player's side gets the same trainer party (same personalities,
+// so the same natures and abilities) as the opponent would.
+u8 TealArena_CreatePlayerParty(u16 trainerNum)
+{
+    return CreateNPCTrainerParty(gPlayerParty, trainerNum, FALSE);
+}
+#endif
 
 static u8 CreateNPCTrainerParty(struct Pokemon *party, u16 trainerNum, bool8 firstTrainer)
 {
@@ -3987,6 +3997,10 @@ void BattleTurnPassed(void)
     for (i = 0; i < 5; i++)
         gBattleCommunication[i] = 0;
 
+#ifdef TEAL_TEST_BATTLE
+    if (gBattleOutcome == 0 && TealArena_TurnCapReached())
+        gBattleOutcome = B_OUTCOME_DREW; // arena: stalemates end as draws
+#endif
     if (gBattleOutcome != 0)
     {
         gCurrentActionFuncId = B_ACTION_FINISHED;

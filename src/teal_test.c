@@ -9,6 +9,7 @@
 #include "event_data.h"
 #include "main.h"
 #include "pokemon.h"
+#include "random.h"
 #include "script_pokemon_util.h"
 #include "string_util.h"
 #include "constants/battle.h"
@@ -30,8 +31,79 @@ static const u16 sTestTrainers[] = {
 static const u8 sTestPlayerName[] = _("TEAL");
 
 EWRAM_DATA static u16 sTestBattleCount = 0;
+EWRAM_DATA static bool8 sLegacyLoop = FALSE;
+EWRAM_DATA struct TealArena gTealArena = {0};
+
+// Frames to wait for a calibration runner before falling back to the legacy loop.
+#define ARENA_HANDSHAKE_FRAMES 180
 
 static void TealTest_NextBattle(void);
+static void LegacyNextBattle(void);
+
+bool8 TealArena_Active(void)
+{
+    return gTealArena.active;
+}
+
+bool8 TealArena_AgentPlays(u8 side)
+{
+    if (!gTealArena.active)
+        return side == B_SIDE_OPPONENT; // legacy loop: the agent plays the trainer, a human the player
+    if (side == B_SIDE_PLAYER)
+        return gTealArena.playerMode == TEAL_ARENA_AGENT;
+    return gTealArena.enemyMode == TEAL_ARENA_AGENT;
+}
+
+bool8 TealArena_AgentPlaysPlayer(void)
+{
+    return TealArena_AgentPlays(B_SIDE_PLAYER);
+}
+
+bool8 TealArena_TurnCapReached(void)
+{
+    return gTealArena.active && gTealArena.maxTurns != 0
+        && gBattleResults.battleTurnCounter + 1 >= gTealArena.maxTurns;
+}
+
+static void ClearBadges(void)
+{
+    u8 i;
+    for (i = 0; i < 8; i++)
+        FlagClear(FLAG_BADGE01_GET + i); // no badge stat boosts for the player's side
+}
+
+static void StartArenaBattle(void)
+{
+    gTealArena.state = TEAL_ARENA_RUNNING;
+    gTealArena.active = TRUE;
+    gTealArena.battleCount++;
+    ClearBadges();
+    gBattleTypeFlags = BATTLE_TYPE_TRAINER;
+    gTrainerBattleOpponent_A = gTealArena.enemyTrainer;
+    ZeroPlayerPartyMons();
+    TealArena_CreatePlayerParty(gTealArena.playerTrainer);
+    CalculatePlayerPartyCount();
+    gRngValue = gTealArena.seed;
+    gMain.savedCallback = TealTest_NextBattle;
+    SetMainCallback2(CB2_InitBattle);
+}
+
+static void CB2_ArenaWait(void)
+{
+    if (gTealArena.state == TEAL_ARENA_READY)
+    {
+        gTealArena.configured = TRUE;
+        StartArenaBattle();
+        return;
+    }
+    gTealArena.waitFrames++;
+    if (!gTealArena.configured && gTealArena.waitFrames > ARENA_HANDSHAKE_FRAMES)
+    {
+        sLegacyLoop = TRUE; // nobody runs the arena: keep the old behaviour
+        gTealArena.state = TEAL_ARENA_IDLE;
+        LegacyNextBattle();
+    }
+}
 
 static void GiveMon(u8 slot, u16 species, u8 level, u16 m0, u16 m1, u16 m2, u16 m3)
 {
@@ -45,8 +117,30 @@ static void GiveMon(u8 slot, u16 species, u8 level, u16 m0, u16 m1, u16 m2, u16 
 
 static void TealTest_NextBattle(void)
 {
+    gTealArena.lastOutcome = gBattleOutcome;
+    gTealArena.lastTurns = gBattleResults.battleTurnCounter;
+    gTealArena.active = FALSE;
+    if (sLegacyLoop)
+    {
+        LegacyNextBattle();
+        return;
+    }
+    // Ask the runner (via the Lua bridge) for the next battle; nothing runs meanwhile.
+    SetVBlankCallback(NULL);
+    SetHBlankCallback(NULL);
+    gTealArena.magic = TEAL_ARENA_MAGIC;
+    gTealArena.waitFrames = 0;
+    gTealArena.state = TEAL_ARENA_WAITING;
+    SetMainCallback2(CB2_ArenaWait);
+}
+
+static void LegacyNextBattle(void)
+{
     u8 i;
 
+    ZeroPlayerPartyMons();
+    GiveMon(0, SPECIES_MARSHTOMP, 30, MOVE_WATER_GUN, MOVE_MUD_SHOT, MOVE_TACKLE, MOVE_PROTECT);
+    CalculatePlayerPartyCount();
     HealPlayerParty();
     gBattleTypeFlags = BATTLE_TYPE_TRAINER;
     gTrainerBattleOpponent_A = sTestTrainers[sTestBattleCount % ARRAY_COUNT(sTestTrainers)];
@@ -70,12 +164,13 @@ void TealTest_Start(void)
     // SET style: no "will you switch?" prompt, so tapping A always means FIGHT -> move 1.
     gSaveBlock2Ptr->optionsBattleStyle = OPTIONS_BATTLE_STYLE_SET;
     gSaveBlock2Ptr->optionsBattleSceneOff = TRUE;
-    ZeroPlayerPartyMons();
-    GiveMon(0, SPECIES_MARSHTOMP, 30, MOVE_WATER_GUN, MOVE_MUD_SHOT, MOVE_TACKLE, MOVE_PROTECT);
-    // One mon only: when it faints the battle is lost and the loop moves on, so the A-tapping
-    // driver never has to work the party menu.
-    CalculatePlayerPartyCount();
+    gSaveBlock2Ptr->optionsTextSpeed = OPTIONS_TEXT_SPEED_FAST;
+    // Legacy loop: one mon only. When it faints the battle is lost and the loop moves on, so
+    // the A-tapping driver never has to work the party menu.
     sTestBattleCount = 0;
+    sLegacyLoop = FALSE;
+    gBattleOutcome = 0;
+    gBattleResults.battleTurnCounter = 0;
     TealTest_NextBattle();
 }
 

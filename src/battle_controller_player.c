@@ -35,6 +35,12 @@
 #include "constants/songs.h"
 #include "constants/trainers.h"
 #include "constants/rgb.h"
+#ifdef TEAL_TEST_BATTLE
+#include "agent_mailbox.h"
+#include "battle_ai_script_commands.h"
+#include "battle_ai_switch_items.h"
+#include "teal_test.h"
+#endif
 
 static void PlayerHandleGetMonData(void);
 static void PlayerHandleSetMonData(void);
@@ -2576,6 +2582,11 @@ static void PlayerHandleChooseAction(void)
 {
     s32 i;
 
+#ifdef TEAL_TEST_BATTLE
+    if (TealArena_PlayerChooseAction())
+        return;
+#endif
+
     gBattlerControllerFuncs[gActiveBattler] = HandleChooseActionAfterDma3;
     BattleTv_ClearExplosionFaintCause();
     BattlePutTextOnWindow(gText_BattleMenu, B_WIN_ACTION_MENU);
@@ -2628,6 +2639,10 @@ static void PlayerChooseMoveInBattlePalace(void)
 
 static void PlayerHandleChooseMove(void)
 {
+#ifdef TEAL_TEST_BATTLE
+    if (TealArena_PlayerChooseMove())
+        return;
+#endif
     if (gBattleTypeFlags & BATTLE_TYPE_PALACE)
     {
         *(gBattleStruct->arenaMindPoints + gActiveBattler) = 8;
@@ -2665,6 +2680,11 @@ static void PlayerHandleChooseItem(void)
 static void PlayerHandleChoosePokemon(void)
 {
     s32 i;
+
+#ifdef TEAL_TEST_BATTLE
+    if (TealArena_PlayerChoosePokemon())
+        return;
+#endif
 
     for (i = 0; i < (int)ARRAY_COUNT(gBattlePartyCurrentOrder); i++)
         gBattlePartyCurrentOrder[i] = gBattleBufferA[gActiveBattler][4 + i];
@@ -3130,3 +3150,160 @@ static void PlayerHandleEndLinkBattle(void)
 static void PlayerCmdEnd(void)
 {
 }
+
+#ifdef TEAL_TEST_BATTLE
+// ---------------------------------------------------------------- Pokemon Teal arena
+// In arena battles the player's side is played like the opponent's: by the vanilla AI
+// (the same trainer AI flags) or by the agent through gAgentMailboxPlayer.
+
+static EWRAM_DATA u8 sArenaMoveSlot = 0;
+static EWRAM_DATA bool8 sArenaMoveValid = FALSE;
+
+static void ArenaWaitForAgentAction(void);
+static void ArenaWaitForAgentReplacement(void);
+
+static void ArenaVanillaAction(void)
+{
+    AI_TrySwitchOrUseItem(); // emits the action; arena battles have no trainer items
+    PlayerBufferExecCompleted();
+}
+
+bool8 TealArena_PlayerChooseAction(void)
+{
+    if (!TealArena_Active())
+        return FALSE;
+    sArenaMoveValid = FALSE;
+    if (AgentMailbox_TryPostRequest(gActiveBattler, AGENT_DECISION_TURN))
+        gBattlerControllerFuncs[gActiveBattler] = ArenaWaitForAgentAction;
+    else
+        ArenaVanillaAction();
+    return TRUE;
+}
+
+static void ArenaWaitForAgentAction(void)
+{
+    u8 respType, respArg;
+    struct AgentMailbox *mb = AgentMailbox_For(gActiveBattler);
+    u8 result = AgentMailbox_Poll(gActiveBattler, &respType, &respArg);
+
+    if (result == AGENT_POLL_PENDING)
+        return;
+    if (result == AGENT_POLL_READY)
+    {
+        if (respType == AGENT_RESP_MOVE && respArg < MAX_MON_MOVES && (mb->moveMask & (1 << respArg)))
+        {
+            sArenaMoveSlot = respArg;
+            sArenaMoveValid = TRUE;
+            BtlController_EmitTwoReturnValues(B_COMM_TO_ENGINE, B_ACTION_USE_MOVE, 0);
+            PlayerBufferExecCompleted();
+            return;
+        }
+        if (respType == AGENT_RESP_SWITCH && respArg < PARTY_SIZE && (mb->switchMask & (1 << respArg)))
+        {
+            *(gBattleStruct->AI_monToSwitchIntoId + gActiveBattler) = respArg;
+            *(gBattleStruct->monToSwitchIntoId + gActiveBattler) = respArg;
+            BtlController_EmitTwoReturnValues(B_COMM_TO_ENGINE, B_ACTION_SWITCH, 0);
+            PlayerBufferExecCompleted();
+            return;
+        }
+        mb->fallbacks++;
+    }
+    ArenaVanillaAction();
+}
+
+bool8 TealArena_PlayerChooseMove(void)
+{
+    struct ChooseMoveStruct *moveInfo = (struct ChooseMoveStruct *)(&gBattleBufferA[gActiveBattler][4]);
+    u8 slot;
+    u8 target;
+
+    if (!TealArena_Active())
+        return FALSE;
+    if (sArenaMoveValid && moveInfo->moves[sArenaMoveSlot] != MOVE_NONE)
+    {
+        slot = sArenaMoveSlot;
+    }
+    else
+    {
+        BattleAI_SetupAIData(ALL_MOVES_MASK);
+        slot = BattleAI_ChooseMoveOrAction();
+        if (slot >= MAX_MON_MOVES || moveInfo->moves[slot] == MOVE_NONE)
+            slot = 0;
+    }
+    sArenaMoveValid = FALSE;
+    if (gBattleMoves[moveInfo->moves[slot]].target & (MOVE_TARGET_USER_OR_SELECTED | MOVE_TARGET_USER))
+        target = gActiveBattler;
+    else
+        target = GetBattlerAtPosition(B_POSITION_OPPONENT_LEFT);
+    BtlController_EmitTwoReturnValues(B_COMM_TO_ENGINE, B_ACTION_EXEC_SCRIPT, slot | (target << 8));
+    PlayerBufferExecCompleted();
+    return TRUE;
+}
+
+static s32 ArenaReplacementVanilla(void)
+{
+    s32 chosen = GetMostSuitableMonToSwitchInto();
+    if (chosen == PARTY_SIZE)
+    {
+        for (chosen = 0; chosen < PARTY_SIZE; chosen++)
+        {
+            if (GetMonData(&gPlayerParty[chosen], MON_DATA_SPECIES) != SPECIES_NONE
+                && !GetMonData(&gPlayerParty[chosen], MON_DATA_IS_EGG)
+                && GetMonData(&gPlayerParty[chosen], MON_DATA_HP) != 0
+                && chosen != gBattlerPartyIndexes[gActiveBattler])
+                break;
+        }
+    }
+    return chosen;
+}
+
+static void ArenaFinishChoosePokemon(s32 chosen)
+{
+    *(gBattleStruct->monToSwitchIntoId + gActiveBattler) = chosen;
+    BtlController_EmitChosenMonReturnValue(B_COMM_TO_ENGINE, chosen, gBattleStruct->battlerPartyOrders[gActiveBattler]);
+    PlayerBufferExecCompleted();
+}
+
+bool8 TealArena_PlayerChoosePokemon(void)
+{
+    s32 chosen;
+
+    if (!TealArena_Active())
+        return FALSE;
+    if (*(gBattleStruct->AI_monToSwitchIntoId + gActiveBattler) == PARTY_SIZE)
+    {
+        if (AgentMailbox_TryPostRequest(gActiveBattler, AGENT_DECISION_FORCED_SWITCH))
+        {
+            gBattlerControllerFuncs[gActiveBattler] = ArenaWaitForAgentReplacement;
+            return TRUE;
+        }
+        chosen = ArenaReplacementVanilla();
+    }
+    else
+    {
+        chosen = *(gBattleStruct->AI_monToSwitchIntoId + gActiveBattler);
+        *(gBattleStruct->AI_monToSwitchIntoId + gActiveBattler) = PARTY_SIZE;
+    }
+    ArenaFinishChoosePokemon(chosen);
+    return TRUE;
+}
+
+static void ArenaWaitForAgentReplacement(void)
+{
+    u8 respType, respArg;
+    struct AgentMailbox *mb = AgentMailbox_For(gActiveBattler);
+    u8 result = AgentMailbox_Poll(gActiveBattler, &respType, &respArg);
+
+    if (result == AGENT_POLL_PENDING)
+        return;
+    if (result == AGENT_POLL_READY && respType == AGENT_RESP_SWITCH && respArg < PARTY_SIZE
+        && (mb->switchMask & (1 << respArg)))
+    {
+        ArenaFinishChoosePokemon(respArg);
+        return;
+    }
+    if (result == AGENT_POLL_READY)
+        mb->fallbacks++;
+    ArenaFinishChoosePokemon(ArenaReplacementVanilla());
+}
+#endif // TEAL_TEST_BATTLE

@@ -1,5 +1,6 @@
 #include "global.h"
 #include "agent_mailbox.h"
+#include "teal_test.h"
 #include "battle.h"
 #include "battle_anim.h"
 #include "battle_ai_script_commands.h"
@@ -295,6 +296,9 @@ void BattleAI_HandleItemUseBeforeAISetup(u8 defaultScoreMoves)
                                | BATTLE_TYPE_EREADER_TRAINER | BATTLE_TYPE_SECRET_BASE | BATTLE_TYPE_FRONTIER
                                | BATTLE_TYPE_INGAME_PARTNER | BATTLE_TYPE_RECORDED_LINK)
             )
+#ifdef TEAL_TEST_BATTLE
+        && !TealArena_Active() // arena: neither side uses trainer items, so the mirror stays fair
+#endif
        )
     {
         for (i = 0; i < MAX_TRAINER_ITEMS; i++)

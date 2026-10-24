@@ -1568,7 +1568,7 @@ static void OpponentHandleChooseAction(void)
 static void OpponentWaitForAgentAction(void)
 {
     u8 respType, respArg;
-    u8 result = AgentMailbox_Poll(&respType, &respArg);
+    u8 result = AgentMailbox_Poll(gActiveBattler, &respType, &respArg);
 
     if (result == AGENT_POLL_PENDING)
         return;
@@ -1770,7 +1770,7 @@ static void OpponentHandleChoosePokemon(void)
 static void OpponentWaitForAgentReplacement(void)
 {
     u8 respType, respArg;
-    u8 result = AgentMailbox_Poll(&respType, &respArg);
+    u8 result = AgentMailbox_Poll(gActiveBattler, &respType, &respArg);
 
     if (result == AGENT_POLL_PENDING)
         return;

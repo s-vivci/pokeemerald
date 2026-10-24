@@ -29,6 +29,32 @@ STATIC_ASSERT(AGENT_OFFSETOF(struct AgentMailbox, player) == 0x120, AgentMailbox
 STATIC_ASSERT(sizeof(struct AgentMailbox) == 0x198, AgentMailboxSize)
 
 EWRAM_DATA struct AgentMailbox gAgentMailbox = {0};
+#ifdef TEAL_TEST_BATTLE
+#include "teal_test.h"
+EWRAM_DATA struct AgentMailbox gAgentMailboxPlayer = {0};
+#endif
+
+struct AgentMailbox *AgentMailbox_For(u8 battler)
+{
+    if (GetBattlerSide(battler) == B_SIDE_OPPONENT)
+        return &gAgentMailbox;
+#ifdef TEAL_TEST_BATTLE
+    return &gAgentMailboxPlayer;
+#else
+    return NULL;
+#endif
+}
+
+// The mailbox that tracks what `battler` has revealed: the one serving the other side.
+static struct AgentMailbox *WatcherOf(u8 battler)
+{
+    return AgentMailbox_For(BATTLE_OPPOSITE(battler));
+}
+
+static struct Pokemon *PartyOf(u8 battler)
+{
+    return GetBattlerSide(battler) == B_SIDE_PLAYER ? gPlayerParty : gEnemyParty;
+}
 
 // Battle types the agent never handles (the vanilla AI keeps them): doubles and everything
 // with special rules or someone else's data.
@@ -37,42 +63,46 @@ EWRAM_DATA struct AgentMailbox gAgentMailbox = {0};
     | BATTLE_TYPE_FRONTIER | BATTLE_TYPE_INGAME_PARTNER | BATTLE_TYPE_TOWER_LINK_MULTI | BATTLE_TYPE_RECORDED \
     | BATTLE_TYPE_RECORDED_LINK | BATTLE_TYPE_TRAINER_HILL | BATTLE_TYPE_SECRET_BASE)
 
-static bool8 BridgeAlive(void)
+static bool8 BridgeAlive(struct AgentMailbox *mb)
 {
-    return gAgentMailbox.bridgeFrame != 0
-        && (u32)(gMain.vblankCounter1 - gAgentMailbox.bridgeFrame) < AGENT_BRIDGE_TIMEOUT_FRAMES;
+    return mb->bridgeFrame != 0
+        && (u32)(gMain.vblankCounter1 - mb->bridgeFrame) < AGENT_BRIDGE_TIMEOUT_FRAMES;
 }
 
-static bool8 IsPlayerBattler(u8 battler)
+static void ResetMailbox(struct AgentMailbox *mb)
 {
-    return GetBattlerSide(battler) == B_SIDE_PLAYER;
+    u32 bridgeFrame = mb->bridgeFrame; // keep the bridge's liveness across battles
+    u32 battleId = mb->battleId;
+    u32 seq = mb->reqSeq;
+
+    CpuFill32(0, mb, sizeof(*mb));
+    mb->magic = AGENT_MAILBOX_MAGIC;
+    mb->version = AGENT_MAILBOX_VERSION;
+    mb->bridgeFrame = bridgeFrame;
+    mb->battleId = battleId + 1;
+    mb->reqSeq = seq;       // sequence numbers never go backwards
+    mb->respSeq = seq;
 }
 
 void AgentMailbox_OnBattleStart(void)
 {
-    u32 bridgeFrame = gAgentMailbox.bridgeFrame; // keep the bridge's liveness across battles
-    u32 battleId = gAgentMailbox.battleId;
-    u32 seq = gAgentMailbox.reqSeq;
-
-    CpuFill32(0, &gAgentMailbox, sizeof(gAgentMailbox));
-    gAgentMailbox.magic = AGENT_MAILBOX_MAGIC;
-    gAgentMailbox.version = AGENT_MAILBOX_VERSION;
-    gAgentMailbox.bridgeFrame = bridgeFrame;
-    gAgentMailbox.battleId = battleId + 1;
-    gAgentMailbox.reqSeq = seq;       // sequence numbers never go backwards
-    gAgentMailbox.respSeq = seq;
+    ResetMailbox(&gAgentMailbox);
+#ifdef TEAL_TEST_BATTLE
+    ResetMailbox(&gAgentMailboxPlayer);
+#endif
 }
 
 static void MarkSeen(u8 battler)
 {
     u8 slot;
-    if (!IsPlayerBattler(battler))
+    struct AgentMailbox *mb = WatcherOf(battler);
+    if (mb == NULL)
         return;
     slot = gBattlerPartyIndexes[battler];
-    if (slot < PARTY_SIZE && gAgentMailbox.player[slot].species == SPECIES_NONE)
+    if (slot < PARTY_SIZE && mb->player[slot].species == SPECIES_NONE)
     {
-        gAgentMailbox.player[slot].species = gBattleMons[battler].species;
-        gAgentMailbox.player[slot].level = gBattleMons[battler].level;
+        mb->player[slot].species = gBattleMons[battler].species;
+        mb->player[slot].level = gBattleMons[battler].level;
     }
 }
 
@@ -81,14 +111,15 @@ void AgentMailbox_RevealMove(u8 battler, u16 move)
     s32 i;
     u8 slot;
     u16 *moves;
+    struct AgentMailbox *mb = WatcherOf(battler);
 
-    if (!IsPlayerBattler(battler) || move == MOVE_NONE || move == MOVE_UNAVAILABLE || move == MOVE_STRUGGLE)
+    if (mb == NULL || move == MOVE_NONE || move == MOVE_UNAVAILABLE || move == MOVE_STRUGGLE)
         return;
     MarkSeen(battler);
     slot = gBattlerPartyIndexes[battler];
     if (slot >= PARTY_SIZE)
         return;
-    moves = gAgentMailbox.player[slot].revealedMoves;
+    moves = mb->player[slot].revealedMoves;
     for (i = 0; i < 4; i++)
     {
         if (moves[i] == move)
@@ -104,25 +135,27 @@ void AgentMailbox_RevealMove(u8 battler, u16 move)
 void AgentMailbox_RevealAbility(u8 battler, u8 ability)
 {
     u8 slot;
-    if (!IsPlayerBattler(battler) || ability == ABILITY_NONE)
+    struct AgentMailbox *mb = WatcherOf(battler);
+    if (mb == NULL || ability == ABILITY_NONE)
         return;
     MarkSeen(battler);
     slot = gBattlerPartyIndexes[battler];
     if (slot < PARTY_SIZE)
-        gAgentMailbox.player[slot].revealedAbility = ability;
+        mb->player[slot].revealedAbility = ability;
 }
 
 void AgentMailbox_RevealItem(u8 battler)
 {
     u8 slot;
     u16 item;
-    if (!IsPlayerBattler(battler))
+    struct AgentMailbox *mb = WatcherOf(battler);
+    if (mb == NULL)
         return;
     MarkSeen(battler);
     slot = gBattlerPartyIndexes[battler];
     item = gBattleMons[battler].item ? gBattleMons[battler].item : gLastUsedItem;
     if (slot < PARTY_SIZE && item != ITEM_NONE)
-        gAgentMailbox.player[slot].revealedItem = item;
+        mb->player[slot].revealedItem = item;
 }
 
 void AgentMailbox_CountVanillaItemUse(void)
@@ -152,13 +185,14 @@ static u8 BuildSwitchMask(u8 battler)
 {
     s32 i;
     u8 mask = 0;
+    struct Pokemon *party = PartyOf(battler);
     for (i = 0; i < PARTY_SIZE; i++)
     {
-        if (GetMonData(&gEnemyParty[i], MON_DATA_SPECIES) == SPECIES_NONE)
+        if (GetMonData(&party[i], MON_DATA_SPECIES) == SPECIES_NONE)
             continue;
-        if (GetMonData(&gEnemyParty[i], MON_DATA_IS_EGG))
+        if (GetMonData(&party[i], MON_DATA_IS_EGG))
             continue;
-        if (GetMonData(&gEnemyParty[i], MON_DATA_HP) == 0)
+        if (GetMonData(&party[i], MON_DATA_HP) == 0)
             continue;
         if (i == gBattlerPartyIndexes[battler])
             continue;
@@ -191,15 +225,17 @@ static u8 BallState(struct Pokemon *mon)
     return AGENT_BALL_HEALTHY;
 }
 
-static void FillParties(void)
+static void FillParties(struct AgentMailbox *mb, u8 battler)
 {
     s32 i, j;
     u8 badges = 0;
+    struct Pokemon *own = PartyOf(battler);
+    struct Pokemon *foe = PartyOf(BATTLE_OPPOSITE(battler));
 
     for (i = 0; i < PARTY_SIZE; i++)
     {
-        struct Pokemon *mon = &gEnemyParty[i];
-        struct AgentEnemyMon *out = &gAgentMailbox.enemy[i];
+        struct Pokemon *mon = &own[i];
+        struct AgentEnemyMon *out = &mb->enemy[i];
         u16 species = GetMonData(mon, MON_DATA_SPECIES);
 
         out->species = species;
@@ -226,8 +262,8 @@ static void FillParties(void)
 
     for (i = 0; i < PARTY_SIZE; i++)
     {
-        struct Pokemon *mon = &gPlayerParty[i];
-        struct AgentPlayerMon *out = &gAgentMailbox.player[i];
+        struct Pokemon *mon = &foe[i];
+        struct AgentPlayerMon *out = &mb->player[i];
 
         out->ball = BallState(mon);
         if (out->species != SPECIES_NONE) // seen: what the screen showed when it was out
@@ -244,17 +280,22 @@ static void FillParties(void)
         if (FlagGet(FLAG_BADGE01_GET + i))
             badges |= 1 << i;
     }
-    gAgentMailbox.badges = badges;
+    mb->badges = badges;
 }
 
-static bool8 ShouldHandle(u8 battler)
+static bool8 ShouldHandle(struct AgentMailbox *mb, u8 battler)
 {
-    if (gAgentMailbox.magic != AGENT_MAILBOX_MAGIC)
+    if (mb == NULL || mb->magic != AGENT_MAILBOX_MAGIC)
         return FALSE;
-    if (!BridgeAlive())
+    if (!BridgeAlive(mb))
         return FALSE;
-    if (GetBattlerSide(battler) != B_SIDE_OPPONENT)
+#ifdef TEAL_TEST_BATTLE
+    if (!TealArena_AgentPlays(GetBattlerSide(battler))) // arena: per-side vanilla / agent
         return FALSE;
+#else
+    if (GetBattlerSide(battler) == B_SIDE_PLAYER)
+        return FALSE;
+#endif
     if (!(gBattleTypeFlags & BATTLE_TYPE_TRAINER) || (gBattleTypeFlags & AGENT_UNSUPPORTED_BATTLES))
         return FALSE;
     if (gTrainerBattleOpponent_A == TRAINER_SECRET_BASE)
@@ -264,57 +305,70 @@ static bool8 ShouldHandle(u8 battler)
 
 bool8 AgentMailbox_TryPostRequest(u8 battler, u8 decisionType)
 {
-    u8 playerBattler;
+    u8 foeBattler;
+    struct AgentMailbox *mb = AgentMailbox_For(battler);
 
-    if (!ShouldHandle(battler))
+    if (!ShouldHandle(mb, battler))
         return FALSE;
 
-    playerBattler = GetBattlerAtPosition(B_POSITION_PLAYER_LEFT);
-    MarkSeen(playerBattler);
+    foeBattler = BATTLE_OPPOSITE(battler);
+    MarkSeen(foeBattler);
 
-    gAgentMailbox.decisionType = decisionType;
-    gAgentMailbox.battler = battler;
-    gAgentMailbox.switchMask = (decisionType == AGENT_DECISION_TURN && IsTrapped(battler)) ? 0 : BuildSwitchMask(battler);
-    gAgentMailbox.moveMask = (decisionType == AGENT_DECISION_TURN) ? BuildMoveMask(battler) : 0;
-    if (gAgentMailbox.moveMask == 0 && gAgentMailbox.switchMask == 0)
+    mb->decisionType = decisionType;
+    mb->battler = battler;
+    mb->switchMask = (decisionType == AGENT_DECISION_TURN && IsTrapped(battler)) ? 0 : BuildSwitchMask(battler);
+    mb->moveMask = (decisionType == AGENT_DECISION_TURN) ? BuildMoveMask(battler) : 0;
+    if (mb->moveMask == 0 && mb->switchMask == 0)
         return FALSE; // nothing to decide (or Struggle): let the engine / vanilla AI handle it
-    if (decisionType == AGENT_DECISION_TURN && gAgentMailbox.moveMask == 0)
+    if (decisionType == AGENT_DECISION_TURN && mb->moveMask == 0)
         return FALSE;
 
-    gAgentMailbox.trainerId = gTrainerBattleOpponent_A;
-    gAgentMailbox.battleTypeFlags = gBattleTypeFlags;
-    gAgentMailbox.turn = gBattleResults.battleTurnCounter;
-    gAgentMailbox.enemyActiveSlot = gBattlerPartyIndexes[battler];
-    gAgentMailbox.playerActiveSlot = gBattlerPartyIndexes[playerBattler];
-    gAgentMailbox.playerPartyCount = CalculatePlayerPartyCount();
-    gAgentMailbox.enemyPartyCount = CalculateEnemyPartyCount();
-    FillParties();
+    mb->trainerId = gTrainerBattleOpponent_A;
+    mb->battleTypeFlags = gBattleTypeFlags;
+    mb->turn = gBattleResults.battleTurnCounter;
+    mb->enemyActiveSlot = gBattlerPartyIndexes[battler];       // own side
+    mb->playerActiveSlot = gBattlerPartyIndexes[foeBattler];   // other side
+    if (GetBattlerSide(battler) == B_SIDE_OPPONENT)
+    {
+        mb->playerPartyCount = CalculatePlayerPartyCount();
+        mb->enemyPartyCount = CalculateEnemyPartyCount();
+    }
+    else
+    {
+        mb->playerPartyCount = CalculateEnemyPartyCount();
+        mb->enemyPartyCount = CalculatePlayerPartyCount();
+    }
+    FillParties(mb, battler);
 
-    gAgentMailbox.respType = AGENT_RESP_NONE;
-    gAgentMailbox.respArg = 0;
-    gAgentMailbox.reqSeq++;
-    gAgentMailbox.romState = AGENT_ROM_REQ_READY; // written last: the request is complete
+    mb->respType = AGENT_RESP_NONE;
+    mb->respArg = 0;
+    mb->reqSeq++;
+    mb->romState = AGENT_ROM_REQ_READY; // written last: the request is complete
     return TRUE;
 }
 
-u8 AgentMailbox_Poll(u8 *respType, u8 *respArg)
+u8 AgentMailbox_Poll(u8 battler, u8 *respType, u8 *respArg)
 {
-    if (gAgentMailbox.bridgeState == AGENT_BRIDGE_RESP_READY && gAgentMailbox.respSeq == gAgentMailbox.reqSeq)
+    struct AgentMailbox *mb = AgentMailbox_For(battler);
+
+    if (mb == NULL)
+        return AGENT_POLL_FALLBACK;
+    if (mb->bridgeState == AGENT_BRIDGE_RESP_READY && mb->respSeq == mb->reqSeq)
     {
-        gAgentMailbox.romState = AGENT_ROM_IDLE;
-        *respType = gAgentMailbox.respType;
-        *respArg = gAgentMailbox.respArg;
+        mb->romState = AGENT_ROM_IDLE;
+        *respType = mb->respType;
+        *respArg = mb->respArg;
         if (*respType == AGENT_RESP_USE_VANILLA || *respType == AGENT_RESP_NONE)
         {
-            gAgentMailbox.fallbacks++;
+            mb->fallbacks++;
             return AGENT_POLL_FALLBACK;
         }
         return AGENT_POLL_READY;
     }
-    if (!BridgeAlive())
+    if (!BridgeAlive(mb))
     {
-        gAgentMailbox.romState = AGENT_ROM_ABANDONED;
-        gAgentMailbox.fallbacks++;
+        mb->romState = AGENT_ROM_ABANDONED;
+        mb->fallbacks++;
         return AGENT_POLL_FALLBACK;
     }
     return AGENT_POLL_PENDING;

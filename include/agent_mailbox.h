@@ -9,6 +9,11 @@
 // Fairness: the player's side is exported only as revealed information (moves the player's
 // mons have used, abilities and items that activated) plus what is on screen (species,
 // level, HP bar pixels, status, party balls). Layout is mirrored in agent/teal/rom/mailbox.py.
+//
+// One mailbox per side. gAgentMailbox serves the enemy trainer. Test builds (TEAL_TEST_BATTLE)
+// add gAgentMailboxPlayer so the arena can let an agent play the player's side too. In each
+// mailbox "enemy" means the deciding side's own party (exact) and "player" the other side's
+// party (revealed only), whichever side that is.
 
 #define AGENT_MAILBOX_MAGIC   0x424D4941 // "AIMB"
 #define AGENT_MAILBOX_VERSION 1
@@ -106,10 +111,14 @@ struct AgentMailbox
 }; // 0x198
 
 extern struct AgentMailbox gAgentMailbox;
+#ifdef TEAL_TEST_BATTLE
+extern struct AgentMailbox gAgentMailboxPlayer;
+#endif
 
 void AgentMailbox_OnBattleStart(void);
+struct AgentMailbox *AgentMailbox_For(u8 battler); // NULL if that side has no mailbox
 bool8 AgentMailbox_TryPostRequest(u8 battler, u8 decisionType);
-u8 AgentMailbox_Poll(u8 *respType, u8 *respArg);
+u8 AgentMailbox_Poll(u8 battler, u8 *respType, u8 *respArg);
 void AgentMailbox_RevealMove(u8 battler, u16 move);
 void AgentMailbox_RevealAbility(u8 battler, u8 ability);
 void AgentMailbox_RevealItem(u8 battler);
