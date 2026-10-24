@@ -31,7 +31,6 @@ static const u16 sTestTrainers[] = {
 static const u8 sTestPlayerName[] = _("TEAL");
 
 EWRAM_DATA static u16 sTestBattleCount = 0;
-EWRAM_DATA static bool8 sLegacyLoop = FALSE;
 EWRAM_DATA struct TealArena gTealArena = {0};
 
 // Frames to wait for a calibration runner before falling back to the legacy loop.
@@ -57,6 +56,11 @@ bool8 TealArena_AgentPlays(u8 side)
 bool8 TealArena_AgentPlaysPlayer(void)
 {
     return TealArena_AgentPlays(B_SIDE_PLAYER);
+}
+
+bool8 TealArena_AIPlaysPlayer(void)
+{
+    return gTealArena.active && gTealArena.playerMode != TEAL_ARENA_HUMAN;
 }
 
 bool8 TealArena_TurnCapReached(void)
@@ -99,7 +103,8 @@ static void CB2_ArenaWait(void)
     gTealArena.waitFrames++;
     if (!gTealArena.configured && gTealArena.waitFrames > ARENA_HANDSHAKE_FRAMES)
     {
-        sLegacyLoop = TRUE; // nobody runs the arena: keep the old behaviour
+        // Nobody runs the arena (yet): play one battle of the old loop, then ask again, so a
+        // runner that connects late (mGBA window: scripts loaded after the ROM) takes over.
         gTealArena.state = TEAL_ARENA_IDLE;
         LegacyNextBattle();
     }
@@ -120,11 +125,6 @@ static void TealTest_NextBattle(void)
     gTealArena.lastOutcome = gBattleOutcome;
     gTealArena.lastTurns = gBattleResults.battleTurnCounter;
     gTealArena.active = FALSE;
-    if (sLegacyLoop)
-    {
-        LegacyNextBattle();
-        return;
-    }
     // Ask the runner (via the Lua bridge) for the next battle; nothing runs meanwhile.
     SetVBlankCallback(NULL);
     SetHBlankCallback(NULL);
@@ -168,7 +168,6 @@ void TealTest_Start(void)
     // Legacy loop: one mon only. When it faints the battle is lost and the loop moves on, so
     // the A-tapping driver never has to work the party menu.
     sTestBattleCount = 0;
-    sLegacyLoop = FALSE;
     gBattleOutcome = 0;
     gBattleResults.battleTurnCounter = 0;
     TealTest_NextBattle();

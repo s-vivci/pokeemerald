@@ -3170,7 +3170,7 @@ static void ArenaVanillaAction(void)
 
 bool8 TealArena_PlayerChooseAction(void)
 {
-    if (!TealArena_Active())
+    if (!TealArena_AIPlaysPlayer())
         return FALSE;
     sArenaMoveValid = FALSE;
     if (AgentMailbox_TryPostRequest(gActiveBattler, AGENT_DECISION_TURN))
@@ -3217,7 +3217,7 @@ bool8 TealArena_PlayerChooseMove(void)
     u8 slot;
     u8 target;
 
-    if (!TealArena_Active())
+    if (!TealArena_AIPlaysPlayer())
         return FALSE;
     if (sArenaMoveValid && moveInfo->moves[sArenaMoveSlot] != MOVE_NONE)
     {
@@ -3268,7 +3268,7 @@ bool8 TealArena_PlayerChoosePokemon(void)
 {
     s32 chosen;
 
-    if (!TealArena_Active())
+    if (!TealArena_AIPlaysPlayer())
         return FALSE;
     if (*(gBattleStruct->AI_monToSwitchIntoId + gActiveBattler) == PARTY_SIZE)
     {

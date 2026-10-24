@@ -24,6 +24,7 @@ void TealTest_Start(void);
 // playerMode / enemyMode
 #define TEAL_ARENA_VANILLA 0
 #define TEAL_ARENA_AGENT   1
+#define TEAL_ARENA_HUMAN   2 // playerMode only: the menus, for the tier gauntlet
 
 struct TealArena
 {
@@ -48,6 +49,7 @@ extern struct TealArena gTealArena;
 bool8 TealArena_Active(void);
 bool8 TealArena_AgentPlays(u8 side);    // who decides for that side: the agent (TRUE) or vanilla
 bool8 TealArena_AgentPlaysPlayer(void);
+bool8 TealArena_AIPlaysPlayer(void);     // arena battle and the player's side is not a human
 bool8 TealArena_TurnCapReached(void);
 
 // battle_controller_player.c: the player's side decides like an AI in arena battles
