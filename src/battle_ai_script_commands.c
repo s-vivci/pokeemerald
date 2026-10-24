@@ -1,4 +1,5 @@
 #include "global.h"
+#include "agent_mailbox.h"
 #include "battle.h"
 #include "battle_anim.h"
 #include "battle_ai_script_commands.h"
@@ -643,6 +644,7 @@ void ClearBattlerMoveHistory(u8 battler)
 void RecordAbilityBattle(u8 battler, u8 abilityId)
 {
     BATTLE_HISTORY->abilities[battler] = abilityId;
+    AgentMailbox_RevealAbility(battler, abilityId);
 }
 
 void ClearBattlerAbilityHistory(u8 battler)
@@ -653,6 +655,7 @@ void ClearBattlerAbilityHistory(u8 battler)
 void RecordItemEffectBattle(u8 battler, u8 itemEffect)
 {
     BATTLE_HISTORY->itemEffects[battler] = itemEffect;
+    AgentMailbox_RevealItem(battler);
 }
 
 void ClearBattlerItemEffectHistory(u8 battler)

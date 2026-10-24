@@ -113,6 +113,10 @@ INCLUDE_SCANINC_ARGS := $(INCLUDE_DIRS:%=-I %)
 
 O_LEVEL ?= 2
 CPPFLAGS := $(INCLUDE_CPP_ARGS) -Wno-trigraphs -DMODERN=$(MODERN)
+# Pokemon Teal: `make TEAL_TEST=1` builds the test-only boot-into-battle ROM
+ifeq ($(TEAL_TEST),1)
+  CPPFLAGS += -DTEAL_TEST_BATTLE
+endif
 ifeq ($(MODERN),0)
   CPPFLAGS += -I tools/agbcc/include -I tools/agbcc -nostdinc -undef -std=gnu89
   CC1 := tools/agbcc/bin/agbcc$(EXE)

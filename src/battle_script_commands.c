@@ -1,4 +1,5 @@
 #include "global.h"
+#include "agent_mailbox.h"
 #include "battle.h"
 #include "battle_message.h"
 #include "battle_anim.h"
@@ -4405,6 +4406,7 @@ static void Cmd_moveend(void)
                 if (gHitMarker & HITMARKER_OBEYS)
                 {
                     gLastMoves[gBattlerAttacker] = gChosenMove;
+                    AgentMailbox_RevealMove(gBattlerAttacker, gChosenMove);
                     gLastResultingMoves[gBattlerAttacker] = gCurrentMove;
                 }
                 else

@@ -1,4 +1,5 @@
 #include "global.h"
+#include "agent_mailbox.h"
 #include "battle.h"
 #include "battle_anim.h"
 #include "battle_ai_script_commands.h"
@@ -3039,6 +3040,7 @@ static void BattleStartClearSetData(void)
 
     TurnValuesCleanUp(FALSE);
     SpecialStatusesClear();
+    AgentMailbox_OnBattleStart();
 
     for (i = 0; i < MAX_BATTLERS_COUNT; i++)
     {

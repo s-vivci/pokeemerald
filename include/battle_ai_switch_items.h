@@ -32,6 +32,7 @@ enum {
 };
 
 void AI_TrySwitchOrUseItem(void);
+bool8 AI_TryUseItemOnly(void);
 u8 GetMostSuitableMonToSwitchInto(void);
 
 #endif // GUARD_BATTLE_AI_SWITCH_ITEMS_H

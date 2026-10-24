@@ -1,4 +1,5 @@
 #include "global.h"
+#include "agent_mailbox.h"
 #include "battle.h"
 #include "battle_anim.h"
 #include "battle_controllers.h"
@@ -600,6 +601,18 @@ void AI_TrySwitchOrUseItem(void)
     }
 
     BtlController_EmitTwoReturnValues(B_COMM_TO_ENGINE, B_ACTION_USE_MOVE, BATTLE_OPPOSITE(gActiveBattler) << 8);
+}
+
+// Pokemon Teal: run only the vanilla item check (Potions, Full Restores...) and leave the
+// move/switch decision to the agent. Returns TRUE if an item was chosen (already emitted).
+bool8 AI_TryUseItemOnly(void)
+{
+    if ((gBattleTypeFlags & BATTLE_TYPE_TRAINER) && ShouldUseItem())
+    {
+        AgentMailbox_CountVanillaItemUse();
+        return TRUE;
+    }
+    return FALSE;
 }
 
 static void ModulateByTypeEffectiveness(u8 atkType, u8 defType1, u8 defType2, u8 *var)

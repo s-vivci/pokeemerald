@@ -1,4 +1,5 @@
 #include "global.h"
+#include "teal_test.h"
 #include "main.h"
 #include "palette.h"
 #include "scanline_effect.h"
@@ -1156,6 +1157,9 @@ void CB2_InitCopyrightScreenAfterBootup(void)
             Sav2_ClearSetDefault();
         SetPokemonCryStereo(gSaveBlock2Ptr->optionsSound);
         InitHeap(gHeap, HEAP_SIZE);
+#ifdef TEAL_TEST_BATTLE
+        TealTest_Start();
+#endif
     }
 }
 

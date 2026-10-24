@@ -94,6 +94,8 @@ SECTIONS {
         src/battle_controller_player.o(.text);
         src/battle_gfx_sfx_util.o(.text);
         src/battle_controller_opponent.o(.text);
+        src/agent_mailbox.o(.text);
+        src/teal_test.o(.text);
         src/battle_ai_switch_items.o(.text);
         src/battle_controller_link_opponent.o(.text);
         src/pokemon.o(.text);
@@ -482,6 +484,8 @@ SECTIONS {
         src/battle_controller_player.o(.rodata);
         src/battle_anim_smokescreen.o(.rodata);
         src/battle_controller_opponent.o(.rodata);
+        src/agent_mailbox.o(.rodata);
+        src/teal_test.o(.rodata);
         src/battle_ai_switch_items.o(.rodata);
         src/battle_controller_link_opponent.o(.rodata);
         src/pokemon.o(.rodata);

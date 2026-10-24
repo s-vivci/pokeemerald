@@ -1,4 +1,6 @@
 #include "global.h"
+#include "agent_mailbox.h"
+#include "battle_ai_switch_items.h"
 #include "battle.h"
 #include "battle_ai_script_commands.h"
 #include "battle_anim.h"
@@ -53,6 +55,9 @@ static void OpponentHandleMoveAnimation(void);
 static void OpponentHandlePrintString(void);
 static void OpponentHandlePrintSelectionString(void);
 static void OpponentHandleChooseAction(void);
+static void OpponentWaitForAgentAction(void);
+static void OpponentWaitForAgentReplacement(void);
+static s32 ChooseReplacementVanilla(void);
 static void OpponentHandleYesNoBox(void);
 static void OpponentHandleChooseMove(void);
 static void OpponentHandleChooseItem(void);
@@ -1537,8 +1542,59 @@ static void OpponentHandlePrintSelectionString(void)
     OpponentBufferExecCompleted();
 }
 
+// Pokemon Teal: move slot chosen by the agent at action time, consumed by OpponentHandleChooseMove.
+static EWRAM_DATA u8 sAgentMoveSlot[MAX_BATTLERS_COUNT] = {0};
+static EWRAM_DATA bool8 sAgentMoveValid[MAX_BATTLERS_COUNT] = {0};
+
 static void OpponentHandleChooseAction(void)
 {
+    sAgentMoveValid[gActiveBattler] = FALSE;
+    // Trainer items stay vanilla for now; if no item is used, ask the agent.
+    if (gBattleTypeFlags & BATTLE_TYPE_TRAINER && AI_TryUseItemOnly())
+    {
+        OpponentBufferExecCompleted();
+        return;
+    }
+    if (AgentMailbox_TryPostRequest(gActiveBattler, AGENT_DECISION_TURN))
+    {
+        gBattlerControllerFuncs[gActiveBattler] = OpponentWaitForAgentAction;
+        return;
+    }
+    AI_TrySwitchOrUseItem();
+    OpponentBufferExecCompleted();
+}
+
+// Runs once per frame until the agent answers; never blocks the game.
+static void OpponentWaitForAgentAction(void)
+{
+    u8 respType, respArg;
+    u8 result = AgentMailbox_Poll(&respType, &respArg);
+
+    if (result == AGENT_POLL_PENDING)
+        return;
+
+    if (result == AGENT_POLL_READY)
+    {
+        if (respType == AGENT_RESP_MOVE && respArg < MAX_MON_MOVES && (gAgentMailbox.moveMask & (1 << respArg)))
+        {
+            sAgentMoveSlot[gActiveBattler] = respArg;
+            sAgentMoveValid[gActiveBattler] = TRUE;
+            BtlController_EmitTwoReturnValues(B_COMM_TO_ENGINE, B_ACTION_USE_MOVE, BATTLE_OPPOSITE(gActiveBattler) << 8);
+            OpponentBufferExecCompleted();
+            return;
+        }
+        if (respType == AGENT_RESP_SWITCH && respArg < PARTY_SIZE && (gAgentMailbox.switchMask & (1 << respArg)))
+        {
+            *(gBattleStruct->AI_monToSwitchIntoId + gActiveBattler) = respArg;
+            *(gBattleStruct->monToSwitchIntoId + gActiveBattler) = respArg;
+            BtlController_EmitTwoReturnValues(B_COMM_TO_ENGINE, B_ACTION_SWITCH, 0);
+            OpponentBufferExecCompleted();
+            return;
+        }
+        gAgentMailbox.fallbacks++; // illegal answer
+    }
+
+    // bridge gone, "use vanilla" or illegal answer: the vanilla AI decides
     AI_TrySwitchOrUseItem();
     OpponentBufferExecCompleted();
 }
@@ -1559,6 +1615,25 @@ static void OpponentHandleChooseMove(void)
     {
         u8 chosenMoveId;
         struct ChooseMoveStruct *moveInfo = (struct ChooseMoveStruct *)(&gBattleBufferA[gActiveBattler][4]);
+
+        if (sAgentMoveValid[gActiveBattler])
+        {
+            u8 slot = sAgentMoveSlot[gActiveBattler];
+            u16 move = moveInfo->moves[slot];
+
+            sAgentMoveValid[gActiveBattler] = FALSE;
+            if (move != MOVE_NONE)
+            {
+                u8 target;
+                if (gBattleMoves[move].target & (MOVE_TARGET_USER_OR_SELECTED | MOVE_TARGET_USER))
+                    target = gActiveBattler;
+                else
+                    target = GetBattlerAtPosition(B_POSITION_PLAYER_LEFT);
+                BtlController_EmitTwoReturnValues(B_COMM_TO_ENGINE, B_ACTION_EXEC_SCRIPT, slot | (target << 8));
+                OpponentBufferExecCompleted();
+                return;
+            }
+        }
 
         if (gBattleTypeFlags & (BATTLE_TYPE_TRAINER | BATTLE_TYPE_FIRST_BATTLE | BATTLE_TYPE_SAFARI | BATTLE_TYPE_ROAMER))
         {
@@ -1618,61 +1693,96 @@ static void OpponentHandleChooseItem(void)
     OpponentBufferExecCompleted();
 }
 
+static s32 ChooseReplacementVanilla(void)
+{
+    s32 chosenMonId;
+
+    chosenMonId = GetMostSuitableMonToSwitchInto();
+
+    if (chosenMonId == PARTY_SIZE)
+    {
+        s32 battler1, battler2, firstId, lastId;
+
+        if (!(gBattleTypeFlags & BATTLE_TYPE_DOUBLE))
+        {
+            battler2 = battler1 = GetBattlerAtPosition(B_POSITION_OPPONENT_LEFT);
+        }
+        else
+        {
+            battler1 = GetBattlerAtPosition(B_POSITION_OPPONENT_LEFT);
+            battler2 = GetBattlerAtPosition(B_POSITION_OPPONENT_RIGHT);
+        }
+
+        if (gBattleTypeFlags & (BATTLE_TYPE_TWO_OPPONENTS | BATTLE_TYPE_TOWER_LINK_MULTI))
+        {
+            if (gActiveBattler == 1)
+                firstId = 0, lastId = PARTY_SIZE / 2;
+            else
+                firstId = PARTY_SIZE / 2, lastId = PARTY_SIZE;
+        }
+        else
+        {
+            firstId = 0, lastId = PARTY_SIZE;
+        }
+
+        for (chosenMonId = firstId; chosenMonId < lastId; chosenMonId++)
+        {
+            if (GetMonData(&gEnemyParty[chosenMonId], MON_DATA_HP) != 0
+                && chosenMonId != gBattlerPartyIndexes[battler1]
+                && chosenMonId != gBattlerPartyIndexes[battler2])
+            {
+                break;
+            }
+        }
+    }
+    return chosenMonId;
+}
+
+static void FinishChoosePokemon(s32 chosenMonId)
+{
+    *(gBattleStruct->monToSwitchIntoId + gActiveBattler) = chosenMonId;
+    BtlController_EmitChosenMonReturnValue(B_COMM_TO_ENGINE, chosenMonId, NULL);
+    OpponentBufferExecCompleted();
+}
+
 static void OpponentHandleChoosePokemon(void)
 {
     s32 chosenMonId;
 
     if (*(gBattleStruct->AI_monToSwitchIntoId + gActiveBattler) == PARTY_SIZE)
     {
-        chosenMonId = GetMostSuitableMonToSwitchInto();
-
-        if (chosenMonId == PARTY_SIZE)
+        // forced replacement (after a faint): ask the agent first
+        if (AgentMailbox_TryPostRequest(gActiveBattler, AGENT_DECISION_FORCED_SWITCH))
         {
-            s32 battler1, battler2, firstId, lastId;
-
-            if (!(gBattleTypeFlags & BATTLE_TYPE_DOUBLE))
-            {
-                battler2 = battler1 = GetBattlerAtPosition(B_POSITION_OPPONENT_LEFT);
-            }
-            else
-            {
-                battler1 = GetBattlerAtPosition(B_POSITION_OPPONENT_LEFT);
-                battler2 = GetBattlerAtPosition(B_POSITION_OPPONENT_RIGHT);
-            }
-
-            if (gBattleTypeFlags & (BATTLE_TYPE_TWO_OPPONENTS | BATTLE_TYPE_TOWER_LINK_MULTI))
-            {
-                if (gActiveBattler == 1)
-                    firstId = 0, lastId = PARTY_SIZE / 2;
-                else
-                    firstId = PARTY_SIZE / 2, lastId = PARTY_SIZE;
-            }
-            else
-            {
-                firstId = 0, lastId = PARTY_SIZE;
-            }
-
-            for (chosenMonId = firstId; chosenMonId < lastId; chosenMonId++)
-            {
-                if (GetMonData(&gEnemyParty[chosenMonId], MON_DATA_HP) != 0
-                    && chosenMonId != gBattlerPartyIndexes[battler1]
-                    && chosenMonId != gBattlerPartyIndexes[battler2])
-                {
-                    break;
-                }
-            }
+            gBattlerControllerFuncs[gActiveBattler] = OpponentWaitForAgentReplacement;
+            return;
         }
+        chosenMonId = ChooseReplacementVanilla();
     }
     else
     {
         chosenMonId = *(gBattleStruct->AI_monToSwitchIntoId + gActiveBattler);
         *(gBattleStruct->AI_monToSwitchIntoId + gActiveBattler) = PARTY_SIZE;
     }
+    FinishChoosePokemon(chosenMonId);
+}
 
+static void OpponentWaitForAgentReplacement(void)
+{
+    u8 respType, respArg;
+    u8 result = AgentMailbox_Poll(&respType, &respArg);
 
-    *(gBattleStruct->monToSwitchIntoId + gActiveBattler) = chosenMonId;
-    BtlController_EmitChosenMonReturnValue(B_COMM_TO_ENGINE, chosenMonId, NULL);
-    OpponentBufferExecCompleted();
+    if (result == AGENT_POLL_PENDING)
+        return;
+    if (result == AGENT_POLL_READY && respType == AGENT_RESP_SWITCH && respArg < PARTY_SIZE
+        && (gAgentMailbox.switchMask & (1 << respArg)))
+    {
+        FinishChoosePokemon(respArg);
+        return;
+    }
+    if (result == AGENT_POLL_READY)
+        gAgentMailbox.fallbacks++;
+    FinishChoosePokemon(ChooseReplacementVanilla());
 }
 
 static void OpponentHandleCmd23(void)
