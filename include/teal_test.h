@@ -41,8 +41,12 @@ struct TealArena
     /*0x15*/ u8 lastTurns;
     /*0x16*/ u8 configured;    // a runner has answered at least once
     /*0x17*/ u8 active;        // the current battle is an arena battle
-    /*0x18*/ u32 waitFrames;
+    /*0x18*/ u16 waitFrames;
+    /*0x1A*/ u8 flags;         // TEAL_ARENA_FLAG_*, set by the runner with each battle
+    /*0x1B*/ u8 unused;
 }; // 0x1C
+
+#define TEAL_ARENA_FLAG_ANIMATIONS (1 << 0) // show move animations (battle scene on); off by default for speed
 
 extern struct TealArena gTealArena;
 

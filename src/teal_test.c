@@ -88,6 +88,7 @@ static void StartArenaBattle(void)
     TealArena_CreatePlayerParty(gTealArena.playerTrainer);
     CalculatePlayerPartyCount();
     gRngValue = gTealArena.seed;
+    gSaveBlock2Ptr->optionsBattleSceneOff = !(gTealArena.flags & TEAL_ARENA_FLAG_ANIMATIONS);
     gMain.savedCallback = TealTest_NextBattle;
     SetMainCallback2(CB2_InitBattle);
 }
