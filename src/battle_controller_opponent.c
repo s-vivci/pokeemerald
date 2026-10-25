@@ -56,6 +56,7 @@ static void OpponentHandlePrintString(void);
 static void OpponentHandlePrintSelectionString(void);
 static void OpponentHandleChooseAction(void);
 static void OpponentWaitForAgentAction(void);
+static void AgentThinkingReset(void);
 static void OpponentWaitForAgentReplacement(void);
 static s32 ChooseReplacementVanilla(void);
 static void OpponentHandleYesNoBox(void);
@@ -1557,11 +1558,49 @@ static void OpponentHandleChooseAction(void)
     }
     if (AgentMailbox_TryPostRequest(gActiveBattler, AGENT_DECISION_TURN))
     {
+        AgentThinkingReset();
         gBattlerControllerFuncs[gActiveBattler] = OpponentWaitForAgentAction;
         return;
     }
     AI_TrySwitchOrUseItem();
     OpponentBufferExecCompleted();
+}
+
+// Pokemon Teal: while the agent is still deciding and the player has nothing to do (their own
+// choice is made, or there is none to make), say so in the message box instead of leaving it
+// blank. Shown after a short delay so quick decisions don't flash it.
+#define AGENT_THINKING_DELAY_FRAMES 30
+static EWRAM_DATA u16 sAgentWaitFrames[MAX_BATTLERS_COUNT] = {0};
+static const u8 sText_AgentThinking[] = _("{B_TRAINER1_CLASS} {B_TRAINER1_NAME}\nis thinking…");
+
+static void AgentThinkingReset(void)
+{
+    sAgentWaitFrames[gActiveBattler] = 0;
+}
+
+static void AgentThinkingTick(bool8 actionSelection)
+{
+    u8 battler;
+
+    if (sAgentWaitFrames[gActiveBattler] == 0xFFFF)
+        return; // already shown for this decision
+    if (sAgentWaitFrames[gActiveBattler] < AGENT_THINKING_DELAY_FRAMES)
+    {
+        sAgentWaitFrames[gActiveBattler]++;
+        return;
+    }
+    if (actionSelection && !TealBattle_PlayerSideConfirmed())
+        return; // the player is still choosing: don't write over their menus
+    for (battler = 0; battler < gBattlersCount; battler++)
+    {
+        if (GetBattlerSide(battler) == B_SIDE_PLAYER && (gBattleControllerExecFlags & gBitTable[battler]))
+            return; // the player's side is busy (a menu, an animation, a message)
+    }
+    sAgentWaitFrames[gActiveBattler] = 0xFFFF;
+    if (!(gBattleTypeFlags & BATTLE_TYPE_TRAINER) || (gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_FRONTIER)))
+        return;
+    BattleStringExpandPlaceholdersToDisplayedString(sText_AgentThinking);
+    BattlePutTextOnWindow(gDisplayedStringBattle, B_WIN_MSG);
 }
 
 // Runs once per frame until the agent answers; never blocks the game.
@@ -1571,7 +1610,10 @@ static void OpponentWaitForAgentAction(void)
     u8 result = AgentMailbox_Poll(gActiveBattler, &respType, &respArg);
 
     if (result == AGENT_POLL_PENDING)
+    {
+        AgentThinkingTick(TRUE);
         return;
+    }
 
     if (result == AGENT_POLL_READY)
     {
@@ -1754,6 +1796,7 @@ static void OpponentHandleChoosePokemon(void)
         // forced replacement (after a faint): ask the agent first
         if (AgentMailbox_TryPostRequest(gActiveBattler, AGENT_DECISION_FORCED_SWITCH))
         {
+            AgentThinkingReset();
             gBattlerControllerFuncs[gActiveBattler] = OpponentWaitForAgentReplacement;
             return;
         }
@@ -1773,7 +1816,10 @@ static void OpponentWaitForAgentReplacement(void)
     u8 result = AgentMailbox_Poll(gActiveBattler, &respType, &respArg);
 
     if (result == AGENT_POLL_PENDING)
+    {
+        AgentThinkingTick(FALSE);
         return;
+    }
     if (result == AGENT_POLL_READY && respType == AGENT_RESP_SWITCH && respArg < PARTY_SIZE
         && (gAgentMailbox.switchMask & (1 << respArg)))
     {

@@ -4142,6 +4142,22 @@ enum
     STATE_SELECTION_SCRIPT_MAY_RUN
 };
 
+// Pokemon Teal: TRUE once every battler on the player's side has locked in its action this turn
+// (the opponent's "is thinking..." message may then use the message box).
+bool8 TealBattle_PlayerSideConfirmed(void)
+{
+    u8 battler;
+
+    for (battler = 0; battler < gBattlersCount; battler++)
+    {
+        if (GetBattlerSide(battler) != B_SIDE_PLAYER || (gAbsentBattlerFlags & gBitTable[battler]))
+            continue;
+        if (gBattleCommunication[battler] < STATE_WAIT_ACTION_CONFIRMED || (gBattleControllerExecFlags & gBitTable[battler]))
+            return FALSE;
+    }
+    return TRUE;
+}
+
 static void HandleTurnActionSelectionState(void)
 {
     s32 i;
