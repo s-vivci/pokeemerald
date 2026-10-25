@@ -89,6 +89,9 @@ static void StartArenaBattle(void)
     CalculatePlayerPartyCount();
     gRngValue = gTealArena.seed;
     gSaveBlock2Ptr->optionsBattleSceneOff = !(gTealArena.flags & TEAL_ARENA_FLAG_ANIMATIONS);
+    // The overworld's battle transition normally starts the music; the arena skips it, so start
+    // the trainer's battle theme here (Elite Four, gym leader, rival... by trainer class).
+    PlayBattleBGM();
     gMain.savedCallback = TealTest_NextBattle;
     SetMainCallback2(CB2_InitBattle);
 }
