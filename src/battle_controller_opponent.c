@@ -1599,6 +1599,11 @@ static void AgentThinkingTick(bool8 actionSelection)
     sAgentWaitFrames[gActiveBattler] = 0xFFFF;
     if (!(gBattleTypeFlags & BATTLE_TYPE_TRAINER) || (gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_FRONTIER)))
         return;
+    // After the player picks a move, the screen still shows the move menu (BG0 is scrolled to
+    // the menu half) until the next battle message; scroll back to the message box first, as the
+    // link "standby" message does.
+    gBattle_BG0_X = 0;
+    gBattle_BG0_Y = 0;
     BattleStringExpandPlaceholdersToDisplayedString(sText_AgentThinking);
     BattlePutTextOnWindow(gDisplayedStringBattle, B_WIN_MSG);
 }
