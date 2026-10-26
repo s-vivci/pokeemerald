@@ -5913,6 +5913,7 @@ static void Cmd_removeitem(void)
 
     usedHeldItem = &gBattleStruct->usedHeldItems[gActiveBattler];
     *usedHeldItem = gBattleMons[gActiveBattler].item;
+    AgentMailbox_RevealItem(gActiveBattler); // teal: a used-up item (a berry, a herb) was announced on screen
     gBattleMons[gActiveBattler].item = ITEM_NONE;
 
     BtlController_EmitSetMonData(B_COMM_TO_CONTROLLER, REQUEST_HELDITEM_BATTLE, 0, sizeof(gBattleMons[gActiveBattler].item), &gBattleMons[gActiveBattler].item);
