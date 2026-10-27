@@ -10260,4 +10260,5 @@ const struct Trainer gTrainers[] = {
         .aiFlags = 0,
         .party = NO_ITEM_DEFAULT_MOVES(sParty_MayLinkPlaceholder),
     },
+#include "teal_preset_trainers.h"
 };

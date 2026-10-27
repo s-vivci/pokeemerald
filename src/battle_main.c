@@ -1968,6 +1968,38 @@ u8 TealArena_CreatePlayerParty(u16 trainerNum)
 }
 #endif
 
+// Pokemon Teal: a preset trainer's mon with its whole set (nature, gender, ability, IVs, EVs)
+static const u8 sTealStatOrder[NUM_STATS] = {0, 1, 2, 4, 5, 3};  // hp atk def spa spd spe -> MON_DATA order
+
+static void CreateTealSetMon(struct Pokemon *mon, const struct TrainerMonTealSet *set)
+{
+    u8 i, gender = set->gender == 1 ? MON_MALE : MON_FEMALE;
+    u16 hp;
+    u8 abilityNum = set->abilityNum;
+
+    u8 ratio = gSpeciesInfo[set->species].genderRatio;
+
+    if (set->gender != 0 && ratio != MON_MALE && ratio != MON_FEMALE && ratio != MON_GENDERLESS)
+        CreateMonWithGenderNatureLetter(mon, set->species, set->lvl, 0, gender, set->nature, 0);
+    else
+        CreateMonWithNature(mon, set->species, set->lvl, 0, set->nature);
+    for (i = 0; i < NUM_STATS; i++)  // the set lists hp atk def spa spd spe; the game keeps speed 4th
+    {
+        SetMonData(mon, MON_DATA_HP_IV + sTealStatOrder[i], &set->ivs[i]);
+        SetMonData(mon, MON_DATA_HP_EV + sTealStatOrder[i], &set->evs[i]);
+    }
+    SetMonData(mon, MON_DATA_ABILITY_NUM, &abilityNum);
+    SetMonData(mon, MON_DATA_HELD_ITEM, &set->heldItem);
+    for (i = 0; i < MAX_MON_MOVES; i++)
+    {
+        SetMonData(mon, MON_DATA_MOVE1 + i, &set->moves[i]);
+        SetMonData(mon, MON_DATA_PP1 + i, &gBattleMoves[set->moves[i]].pp);
+    }
+    CalculateMonStats(mon);
+    hp = GetMonData(mon, MON_DATA_MAX_HP);
+    SetMonData(mon, MON_DATA_HP, &hp);
+}
+
 static u8 CreateNPCTrainerParty(struct Pokemon *party, u16 trainerNum, bool8 firstTrainer)
 {
     u32 nameHash = 0;
@@ -2057,6 +2089,9 @@ static u8 CreateNPCTrainerParty(struct Pokemon *party, u16 trainerNum, bool8 fir
                 SetMonData(&party[i], MON_DATA_HELD_ITEM, &partyData[i].heldItem);
                 break;
             }
+            case F_TRAINER_PARTY_TEAL_SETS:
+                CreateTealSetMon(&party[i], &gTrainers[trainerNum].party.TealSets[i]);
+                break;
             case F_TRAINER_PARTY_CUSTOM_MOVESET | F_TRAINER_PARTY_HELD_ITEM:
             {
                 const struct TrainerMonItemCustomMoves *partyData = gTrainers[trainerNum].party.ItemCustomMoves;

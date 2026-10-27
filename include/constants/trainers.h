@@ -109,6 +109,7 @@
 #define TRAINER_PIC_LEAF                  90
 #define TRAINER_PIC_RS_BRENDAN            91
 #define TRAINER_PIC_RS_MAY                92
+#define TRAINER_PIC_ELOWEN                93 // Pokemon Teal: the preset teams' trainer
 
 // The player back pics are assumed to alternate according to the gender values (MALE/FEMALE)
 #define TRAINER_BACK_PIC_BRENDAN                0
@@ -374,5 +375,6 @@
 // Pokémon.
 #define F_TRAINER_PARTY_CUSTOM_MOVESET (1 << 0)
 #define F_TRAINER_PARTY_HELD_ITEM      (1 << 1)
+#define F_TRAINER_PARTY_TEAL_SETS      (1 << 2) // Pokemon Teal: struct TrainerMonTealSet
 
 #endif  // GUARD_TRAINERS_H

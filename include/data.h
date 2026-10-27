@@ -64,10 +64,25 @@ struct TrainerMonItemCustomMoves
     u16 moves[MAX_MON_MOVES];
 };
 
+// Pokemon Teal: full competitive sets for the preset trainers (teal/presets.py generates them)
+struct TrainerMonTealSet
+{
+    u16 species;
+    u16 heldItem;
+    u16 moves[MAX_MON_MOVES];
+    u8 lvl;
+    u8 nature;
+    u8 abilityNum;
+    u8 gender;     // 0: as it comes, 1: male, 2: female
+    u8 ivs[NUM_STATS];
+    u8 evs[NUM_STATS];
+}; // 28 bytes
+
 #define NO_ITEM_DEFAULT_MOVES(party) { .NoItemDefaultMoves = party }, .partySize = ARRAY_COUNT(party), .partyFlags = 0
 #define NO_ITEM_CUSTOM_MOVES(party) { .NoItemCustomMoves = party }, .partySize = ARRAY_COUNT(party), .partyFlags = F_TRAINER_PARTY_CUSTOM_MOVESET
 #define ITEM_DEFAULT_MOVES(party) { .ItemDefaultMoves = party }, .partySize = ARRAY_COUNT(party), .partyFlags = F_TRAINER_PARTY_HELD_ITEM
 #define ITEM_CUSTOM_MOVES(party) { .ItemCustomMoves = party }, .partySize = ARRAY_COUNT(party), .partyFlags = F_TRAINER_PARTY_CUSTOM_MOVESET | F_TRAINER_PARTY_HELD_ITEM
+#define TEAL_SETS(party) { .TealSets = party }, .partySize = ARRAY_COUNT(party), .partyFlags = F_TRAINER_PARTY_TEAL_SETS
 
 union TrainerMonPtr
 {
@@ -75,6 +90,7 @@ union TrainerMonPtr
     const struct TrainerMonNoItemCustomMoves *NoItemCustomMoves;
     const struct TrainerMonItemDefaultMoves *ItemDefaultMoves;
     const struct TrainerMonItemCustomMoves *ItemCustomMoves;
+    const struct TrainerMonTealSet *TealSets;
 };
 
 struct Trainer

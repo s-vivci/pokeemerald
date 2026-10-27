@@ -782,6 +782,10 @@ static u8 GetSumOfEnemyPartyLevel(u16 opponentId, u8 numMons)
                 sum += party[i].lvl;
         }
         break;
+    case F_TRAINER_PARTY_TEAL_SETS:
+        for (i = 0; i < count; i++)
+            sum += gTrainers[opponentId].party.TealSets[i].lvl;
+        break;
     }
 
     return sum;

@@ -276,6 +276,8 @@ const u32 gTrainerPalette_RubySapphireBrendan[] = INCGFX_U32("graphics/trainers/
 
 const u32 gTrainerFrontPic_RubySapphireMay[] = INCGFX_U32("graphics/trainers/front_pics/may_rs.png", ".4bpp.lz");
 const u32 gTrainerPalette_RubySapphireMay[] = INCGFX_U32("graphics/trainers/palettes/may_rs.pal", ".gbapal.lz");
+const u32 gTrainerFrontPic_Elowen[] = INCGFX_U32("graphics/trainers/front_pics/elowen.png", ".4bpp.lz");  // Pokemon Teal
+const u32 gTrainerPalette_Elowen[] = INCGFX_U32("graphics/trainers/front_pics/elowen.png", ".gbapal.lz");
 
 const u8 gTrainerBackPic_Brendan[] = INCGFX_U8("graphics/trainers/back_pics/brendan.png", ".4bpp");
 const u8 gTrainerBackPic_May[] = INCGFX_U8("graphics/trainers/back_pics/may.png", ".4bpp");
