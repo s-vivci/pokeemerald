@@ -319,9 +319,9 @@ bool8 AgentMailbox_TryPostRequest(u8 battler, u8 decisionType)
     mb->switchMask = (decisionType == AGENT_DECISION_TURN && IsTrapped(battler)) ? 0 : BuildSwitchMask(battler);
     mb->moveMask = (decisionType == AGENT_DECISION_TURN) ? BuildMoveMask(battler) : 0;
     if (mb->moveMask == 0 && mb->switchMask == 0)
-        return FALSE; // nothing to decide (or Struggle): let the engine / vanilla AI handle it
-    if (decisionType == AGENT_DECISION_TURN && mb->moveMask == 0)
-        return FALSE;
+        return FALSE; // nothing to decide (Struggle with no switch): let the engine / vanilla AI handle it
+    // Every move blocked (Taunt, Disable, Torment, no PP) but a switch is open: the agent still
+    // decides. A MOVE answer with moveMask 0 means Fight, which the engine turns into Struggle.
 
     mb->trainerId = gTrainerBattleOpponent_A;
     mb->battleTypeFlags = gBattleTypeFlags;

@@ -3190,6 +3190,13 @@ static void ArenaWaitForAgentAction(void)
         return;
     if (result == AGENT_POLL_READY)
     {
+        if (respType == AGENT_RESP_MOVE && mb->moveMask == 0)
+        {
+            // every move is blocked: Fight means Struggle (AreAllMovesUnusable), no slot to pick
+            BtlController_EmitTwoReturnValues(B_COMM_TO_ENGINE, B_ACTION_USE_MOVE, 0);
+            PlayerBufferExecCompleted();
+            return;
+        }
         if (respType == AGENT_RESP_MOVE && respArg < MAX_MON_MOVES && (mb->moveMask & (1 << respArg)))
         {
             sArenaMoveSlot = respArg;
