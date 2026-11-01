@@ -985,14 +985,21 @@ static u8 TrainerBattleLoadArg8(const u8 *ptr)
     return T1_READ_8(ptr);
 }
 
+// Pokemon Teal: trainers past MAX_TRAINERS_COUNT (preset teams) have no defeat flag. Flag 0 is a
+// no-op for FlagGet / FlagSet / FlagClear, so they read as never fought and setting it does nothing.
+static u16 TrainerFlag(u16 trainerId)
+{
+    return trainerId < MAX_TRAINERS_COUNT ? TRAINER_FLAGS_START + trainerId : 0;
+}
+
 static u16 GetTrainerAFlag(void)
 {
-    return TRAINER_FLAGS_START + gTrainerBattleOpponent_A;
+    return TrainerFlag(gTrainerBattleOpponent_A);
 }
 
 static u16 GetTrainerBFlag(void)
 {
-    return TRAINER_FLAGS_START + gTrainerBattleOpponent_B;
+    return TrainerFlag(gTrainerBattleOpponent_B);
 }
 
 static bool32 IsPlayerDefeated(u32 battleOutcome)
@@ -1219,7 +1226,7 @@ void SetUpTwoTrainersBattle(void)
 bool32 GetTrainerFlagFromScriptPointer(const u8 *data)
 {
     u32 flag = TrainerBattleLoadArg16(data + 2);
-    return FlagGet(TRAINER_FLAGS_START + flag);
+    return FlagGet(TrainerFlag(flag));
 }
 
 // Set trainer's movement type so they stop and remain facing that direction
@@ -1260,17 +1267,17 @@ static void UNUSED SetBattledTrainerFlag(void)
 
 bool8 HasTrainerBeenFought(u16 trainerId)
 {
-    return FlagGet(TRAINER_FLAGS_START + trainerId);
+    return FlagGet(TrainerFlag(trainerId));
 }
 
 void SetTrainerFlag(u16 trainerId)
 {
-    FlagSet(TRAINER_FLAGS_START + trainerId);
+    FlagSet(TrainerFlag(trainerId));
 }
 
 void ClearTrainerFlag(u16 trainerId)
 {
-    FlagClear(TRAINER_FLAGS_START + trainerId);
+    FlagClear(TrainerFlag(trainerId));
 }
 
 void BattleSetup_StartTrainerBattle(void)

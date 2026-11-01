@@ -863,12 +863,21 @@
 #define TRAINER_TEAL_OU_4                   858
 #define TRAINER_TEAL_OU_5                   859
 #define TRAINER_TEAL_OU_6                   860
+#define TRAINER_TEAL_UU_1                   861
+#define TRAINER_TEAL_UU_2                   862
+#define TRAINER_TEAL_UU_3                   863
+#define TRAINER_TEAL_UU_4                   864
+#define TRAINER_TEAL_UU_5                   865
+#define TRAINER_TEAL_UU_6                   866
 
 // NOTE: Because each Trainer uses a flag to determine when they are defeated, there is only space for 9 additional trainers before trainer flag space overflows
 //       More space can be made by shifting flags around in constants/flags.h or changing how trainer flags are handled
 //       MAX_TRAINERS_COUNT can be increased but will take up additional saveblock space
+// Pokemon Teal: trainers from MAX_TRAINERS_COUNT on (preset teams, fought only from the launcher) have no
+//       defeat flag: battle_setup.c's TrainerFlag() gives flag 0, which FlagGet / FlagSet ignore. Raising
+//       MAX_TRAINERS_COUNT instead would move every system flag and break existing saves.
 
-#define TRAINERS_COUNT                      861
+#define TRAINERS_COUNT                      867
 #define MAX_TRAINERS_COUNT                  864
 
 #endif  // GUARD_CONSTANTS_OPPONENTS_H

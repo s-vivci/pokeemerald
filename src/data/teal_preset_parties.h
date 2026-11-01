@@ -419,3 +419,423 @@ static const struct TrainerMonTealSet sParty_TealOU6[] = {
         .evs = {0, 168, 0, 0, 200, 140},
     },
 };
+
+// UU Balance 1
+static const struct TrainerMonTealSet sParty_TealUU1[] = {
+    {
+        .species = SPECIES_KANGASKHAN,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_RETURN, MOVE_WISH, MOVE_TOXIC, MOVE_REST},
+        .lvl = 100,
+        .nature = NATURE_CAREFUL,
+        .abilityNum = 0,
+        .gender = 2,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 112, 0, 128, 16},
+    },
+    {
+        .species = SPECIES_VILEPLUME,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_SLUDGE_BOMB, MOVE_LEECH_SEED, MOVE_HIDDEN_POWER, MOVE_MOONLIGHT},
+        .lvl = 100,
+        .nature = NATURE_IMPISH,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 30, 30, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 196, 0, 60, 0},
+    },
+    {
+        .species = SPECIES_SOLROCK,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_ROCK_SLIDE, MOVE_EXPLOSION, MOVE_HIDDEN_POWER, MOVE_FIRE_SPIN},
+        .lvl = 100,
+        .nature = NATURE_ADAMANT,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 30, 30, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 32, 0, 0, 200, 24},
+    },
+    {
+        .species = SPECIES_TENTACRUEL,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_SURF, MOVE_ICE_BEAM, MOVE_HIDDEN_POWER, MOVE_RAPID_SPIN},
+        .lvl = 100,
+        .nature = NATURE_MODEST,
+        .abilityNum = 1,
+        .gender = 0,
+        .ivs = {31, 3, 31, 30, 31, 31},  // hp atk def spa spd spe
+        .evs = {0, 0, 0, 252, 4, 252},
+    },
+    {
+        .species = SPECIES_AMPHAROS,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_THUNDERBOLT, MOVE_HIDDEN_POWER, MOVE_TOXIC, MOVE_HEAL_BELL},
+        .lvl = 100,
+        .nature = NATURE_MODEST,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 2, 30, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {232, 0, 80, 88, 92, 16},
+    },
+    {
+        .species = SPECIES_SCYTHER,
+        .heldItem = ITEM_CHOICE_BAND,
+        .moves = {MOVE_HIDDEN_POWER, MOVE_AERIAL_ACE, MOVE_QUICK_ATTACK, MOVE_DOUBLE_EDGE},
+        .lvl = 100,
+        .nature = NATURE_JOLLY,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 31, 30, 30},  // hp atk def spa spd spe
+        .evs = {0, 252, 0, 0, 4, 252},
+    },
+};
+
+// UU Spikes 1
+static const struct TrainerMonTealSet sParty_TealUU2[] = {
+    {
+        .species = SPECIES_WALREIN,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_ICE_BEAM, MOVE_SURF, MOVE_TOXIC, MOVE_EARTHQUAKE},
+        .lvl = 100,
+        .nature = NATURE_MODEST,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 116, 140, 0, 0},
+    },
+    {
+        .species = SPECIES_KANGASKHAN,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_RETURN, MOVE_WISH, MOVE_TOXIC, MOVE_REST},
+        .lvl = 100,
+        .nature = NATURE_CAREFUL,
+        .abilityNum = 0,
+        .gender = 2,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 112, 0, 128, 16},
+    },
+    {
+        .species = SPECIES_OMASTAR,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_SPIKES, MOVE_SURF, MOVE_HIDDEN_POWER, MOVE_REST},
+        .lvl = 100,
+        .nature = NATURE_BOLD,
+        .abilityNum = 1,
+        .gender = 0,
+        .ivs = {31, 3, 31, 30, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 200, 0, 0, 56},
+    },
+    {
+        .species = SPECIES_VILEPLUME,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_SLUDGE_BOMB, MOVE_LEECH_SEED, MOVE_AROMATHERAPY, MOVE_MOONLIGHT},
+        .lvl = 100,
+        .nature = NATURE_IMPISH,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 196, 0, 60, 0},
+    },
+    {
+        .species = SPECIES_TENTACRUEL,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_SURF, MOVE_ICE_BEAM, MOVE_HIDDEN_POWER, MOVE_RAPID_SPIN},
+        .lvl = 100,
+        .nature = NATURE_MODEST,
+        .abilityNum = 1,
+        .gender = 0,
+        .ivs = {31, 3, 31, 30, 31, 31},  // hp atk def spa spd spe
+        .evs = {0, 0, 0, 252, 4, 252},
+    },
+    {
+        .species = SPECIES_SCYTHER,
+        .heldItem = ITEM_CHOICE_BAND,
+        .moves = {MOVE_HIDDEN_POWER, MOVE_AERIAL_ACE, MOVE_QUICK_ATTACK, MOVE_DOUBLE_EDGE},
+        .lvl = 100,
+        .nature = NATURE_JOLLY,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 31, 30, 30},  // hp atk def spa spd spe
+        .evs = {0, 252, 0, 0, 4, 252},
+    },
+};
+
+// UU Spikes 2
+static const struct TrainerMonTealSet sParty_TealUU3[] = {
+    {
+        .species = SPECIES_HITMONTOP,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_BRICK_BREAK, MOVE_TOXIC, MOVE_EARTHQUAKE, MOVE_RAPID_SPIN},
+        .lvl = 100,
+        .nature = NATURE_ADAMANT,
+        .abilityNum = 0,
+        .gender = 1,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 56, 188, 0, 0, 12},
+    },
+    {
+        .species = SPECIES_KANGASKHAN,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_RETURN, MOVE_WISH, MOVE_TOXIC, MOVE_REST},
+        .lvl = 100,
+        .nature = NATURE_CAREFUL,
+        .abilityNum = 0,
+        .gender = 2,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 112, 0, 128, 16},
+    },
+    {
+        .species = SPECIES_OMASTAR,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_SPIKES, MOVE_SURF, MOVE_HIDDEN_POWER, MOVE_REST},
+        .lvl = 100,
+        .nature = NATURE_BOLD,
+        .abilityNum = 1,
+        .gender = 0,
+        .ivs = {31, 3, 31, 30, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 200, 0, 0, 56},
+    },
+    {
+        .species = SPECIES_VILEPLUME,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_SLUDGE_BOMB, MOVE_LEECH_SEED, MOVE_AROMATHERAPY, MOVE_MOONLIGHT},
+        .lvl = 100,
+        .nature = NATURE_IMPISH,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 196, 0, 60, 0},
+    },
+    {
+        .species = SPECIES_WALREIN,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_ICE_BEAM, MOVE_HIDDEN_POWER, MOVE_TOXIC, MOVE_EARTHQUAKE},
+        .lvl = 100,
+        .nature = NATURE_MODEST,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 30, 30, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 116, 140, 0, 0},
+    },
+    {
+        .species = SPECIES_SCYTHER,
+        .heldItem = ITEM_CHOICE_BAND,
+        .moves = {MOVE_HIDDEN_POWER, MOVE_AERIAL_ACE, MOVE_QUICK_ATTACK, MOVE_DOUBLE_EDGE},
+        .lvl = 100,
+        .nature = NATURE_JOLLY,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 31, 30, 30},  // hp atk def spa spd spe
+        .evs = {0, 252, 0, 0, 4, 252},
+    },
+};
+
+// UU Balance 2
+static const struct TrainerMonTealSet sParty_TealUU4[] = {
+    {
+        .species = SPECIES_GRANBULL,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_RETURN, MOVE_EARTHQUAKE, MOVE_BULK_UP, MOVE_REST},
+        .lvl = 100,
+        .nature = NATURE_ADAMANT,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 40, 120, 0, 0, 96},
+    },
+    {
+        .species = SPECIES_KANGASKHAN,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_RETURN, MOVE_WISH, MOVE_TOXIC, MOVE_REST},
+        .lvl = 100,
+        .nature = NATURE_CAREFUL,
+        .abilityNum = 0,
+        .gender = 2,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 112, 0, 128, 16},
+    },
+    {
+        .species = SPECIES_TENTACRUEL,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_SURF, MOVE_ICE_BEAM, MOVE_TOXIC, MOVE_RAPID_SPIN},
+        .lvl = 100,
+        .nature = NATURE_TIMID,
+        .abilityNum = 1,
+        .gender = 0,
+        .ivs = {31, 0, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {0, 0, 0, 252, 4, 252},
+    },
+    {
+        .species = SPECIES_AMPHAROS,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_THUNDERBOLT, MOVE_HIDDEN_POWER, MOVE_TOXIC, MOVE_HEAL_BELL},
+        .lvl = 100,
+        .nature = NATURE_MODEST,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 2, 30, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {232, 0, 80, 88, 92, 16},
+    },
+    {
+        .species = SPECIES_SLOWKING,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_SURF, MOVE_PSYCHIC, MOVE_CALM_MIND, MOVE_REST},
+        .lvl = 100,
+        .nature = NATURE_BOLD,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 0, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 232, 20, 0, 4},
+    },
+    {
+        .species = SPECIES_GLIGAR,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_SWORDS_DANCE, MOVE_EARTHQUAKE, MOVE_HIDDEN_POWER, MOVE_QUICK_ATTACK},
+        .lvl = 100,
+        .nature = NATURE_JOLLY,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 30, 30, 30},  // hp atk def spa spd spe
+        .evs = {0, 252, 0, 0, 4, 252},
+    },
+};
+
+// UU Offense 1 (Rain)
+static const struct TrainerMonTealSet sParty_TealUU5[] = {
+    {
+        .species = SPECIES_GLALIE,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_EARTHQUAKE, MOVE_HIDDEN_POWER, MOVE_EXPLOSION, MOVE_SPIKES},
+        .lvl = 100,
+        .nature = NATURE_JOLLY,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 30, 30, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 4, 0, 0, 252},
+    },
+    {
+        .species = SPECIES_KANGASKHAN,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_DOUBLE_EDGE, MOVE_EARTHQUAKE, MOVE_SHADOW_BALL, MOVE_YAWN},
+        .lvl = 100,
+        .nature = NATURE_ADAMANT,
+        .abilityNum = 0,
+        .gender = 2,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {0, 252, 0, 0, 4, 252},
+    },
+    {
+        .species = SPECIES_GOREBYSS,
+        .heldItem = ITEM_MYSTIC_WATER,
+        .moves = {MOVE_RAIN_DANCE, MOVE_SURF, MOVE_PSYCHIC, MOVE_HYDRO_PUMP},
+        .lvl = 100,
+        .nature = NATURE_TIMID,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 0, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {4, 0, 0, 216, 36, 252},
+    },
+    {
+        .species = SPECIES_ELECTRODE,
+        .heldItem = ITEM_MAGNET,
+        .moves = {MOVE_THUNDERBOLT, MOVE_HIDDEN_POWER, MOVE_EXPLOSION, MOVE_TAUNT},
+        .lvl = 100,
+        .nature = NATURE_NAIVE,
+        .abilityNum = 1,
+        .gender = 0,
+        .ivs = {31, 31, 31, 31, 31, 30},  // hp atk def spa spd spe
+        .evs = {0, 100, 0, 192, 0, 216},
+    },
+    {
+        .species = SPECIES_SANDSLASH,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_SWORDS_DANCE, MOVE_EARTHQUAKE, MOVE_ROCK_SLIDE, MOVE_DOUBLE_EDGE},
+        .lvl = 100,
+        .nature = NATURE_JOLLY,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {4, 252, 0, 0, 0, 252},
+    },
+    {
+        .species = SPECIES_SCYTHER,
+        .heldItem = ITEM_SALAC_BERRY,
+        .moves = {MOVE_SWORDS_DANCE, MOVE_HIDDEN_POWER, MOVE_REVERSAL, MOVE_SUBSTITUTE},
+        .lvl = 100,
+        .nature = NATURE_JOLLY,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 30, 30, 30},  // hp atk def spa spd spe
+        .evs = {4, 252, 0, 0, 0, 252},
+    },
+};
+
+// UU Offense 2
+static const struct TrainerMonTealSet sParty_TealUU6[] = {
+    {
+        .species = SPECIES_PINSIR,
+        .heldItem = ITEM_SILK_SCARF,
+        .moves = {MOVE_SWORDS_DANCE, MOVE_HIDDEN_POWER, MOVE_EARTHQUAKE, MOVE_DOUBLE_EDGE},
+        .lvl = 100,
+        .nature = NATURE_JOLLY,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 31, 30, 30},  // hp atk def spa spd spe
+        .evs = {0, 252, 0, 0, 4, 252},
+    },
+    {
+        .species = SPECIES_KANGASKHAN,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_DOUBLE_EDGE, MOVE_EARTHQUAKE, MOVE_SHADOW_BALL, MOVE_YAWN},
+        .lvl = 100,
+        .nature = NATURE_ADAMANT,
+        .abilityNum = 0,
+        .gender = 2,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {0, 252, 0, 0, 4, 252},
+    },
+    {
+        .species = SPECIES_GLALIE,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_EARTHQUAKE, MOVE_HIDDEN_POWER, MOVE_EXPLOSION, MOVE_SPIKES},
+        .lvl = 100,
+        .nature = NATURE_JOLLY,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 30, 30, 31, 31},  // hp atk def spa spd spe
+        .evs = {252, 0, 4, 0, 0, 252},
+    },
+    {
+        .species = SPECIES_SANDSLASH,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_SWORDS_DANCE, MOVE_EARTHQUAKE, MOVE_ROCK_SLIDE, MOVE_DOUBLE_EDGE},
+        .lvl = 100,
+        .nature = NATURE_JOLLY,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 31, 31, 31, 31},  // hp atk def spa spd spe
+        .evs = {4, 252, 0, 0, 0, 252},
+    },
+    {
+        .species = SPECIES_GOLDUCK,
+        .heldItem = ITEM_LEFTOVERS,
+        .moves = {MOVE_HYDRO_PUMP, MOVE_PSYCHIC, MOVE_HIDDEN_POWER, MOVE_CALM_MIND},
+        .lvl = 100,
+        .nature = NATURE_MODEST,
+        .abilityNum = 1,
+        .gender = 0,
+        .ivs = {31, 2, 31, 30, 31, 31},  // hp atk def spa spd spe
+        .evs = {0, 0, 0, 252, 4, 252},
+    },
+    {
+        .species = SPECIES_SCYTHER,
+        .heldItem = ITEM_SILK_SCARF,
+        .moves = {MOVE_SWORDS_DANCE, MOVE_HIDDEN_POWER, MOVE_DOUBLE_EDGE, MOVE_QUICK_ATTACK},
+        .lvl = 100,
+        .nature = NATURE_JOLLY,
+        .abilityNum = 0,
+        .gender = 0,
+        .ivs = {31, 31, 30, 30, 30, 30},  // hp atk def spa spd spe
+        .evs = {0, 252, 0, 0, 4, 252},
+    },
+};

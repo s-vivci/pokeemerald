@@ -121,6 +121,7 @@ bool8 AgentMailbox_TryPostRequest(u8 battler, u8 decisionType);
 u8 AgentMailbox_Poll(u8 battler, u8 *respType, u8 *respArg);
 void AgentMailbox_RevealMove(u8 battler, u16 move);
 void AgentMailbox_RevealAbility(u8 battler, u8 ability);
+void AgentMailbox_RevealSwitchIn(u8 battler); // sent out: the other side has seen it, even if it faints at once
 
 // battle_main.c: the player's side has locked in its actions for this turn
 bool8 TealBattle_PlayerSideConfirmed(void);

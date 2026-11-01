@@ -106,6 +106,11 @@ static void MarkSeen(u8 battler)
     }
 }
 
+void AgentMailbox_RevealSwitchIn(u8 battler)
+{
+    MarkSeen(battler);
+}
+
 void AgentMailbox_RevealMove(u8 battler, u16 move)
 {
     s32 i;

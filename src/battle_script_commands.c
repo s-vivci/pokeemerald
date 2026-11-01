@@ -4674,6 +4674,7 @@ static void Cmd_switchindataupdate(void)
     gBattleScripting.battler = gActiveBattler;
 
     PREPARE_MON_NICK_BUFFER(gBattleTextBuff1, gActiveBattler, gBattlerPartyIndexes[gActiveBattler]);
+    AgentMailbox_RevealSwitchIn(gActiveBattler); // teal: it is on screen now, whatever happens next
 
     gBattlescriptCurrInstr += 2;
 }
