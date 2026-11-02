@@ -352,6 +352,71 @@ bool8 AgentMailbox_TryPostRequest(u8 battler, u8 decisionType)
     return TRUE;
 }
 
+// Every Pokemon on this side able to battle (the default lead included): the lead choices.
+static u8 BuildLeadMask(u8 battler)
+{
+    s32 i;
+    u8 mask = 0;
+    struct Pokemon *party = PartyOf(battler);
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        if (GetMonData(&party[i], MON_DATA_SPECIES) == SPECIES_NONE || GetMonData(&party[i], MON_DATA_IS_EGG)
+         || GetMonData(&party[i], MON_DATA_HP) == 0)
+            continue;
+        mask |= 1 << i;
+    }
+    return mask;
+}
+
+bool8 AgentMailbox_TryPostLeadRequest(u8 battler)
+{
+    struct AgentMailbox *mb = AgentMailbox_For(battler);
+
+    if (!ShouldHandle(mb, battler))
+        return FALSE;
+    mb->decisionType = AGENT_DECISION_LEAD;
+    mb->battler = battler;
+    mb->moveMask = 0;
+    mb->switchMask = BuildLeadMask(battler);
+    if ((mb->switchMask & (mb->switchMask - 1)) == 0)
+        return FALSE; // one Pokemon (or none) able to battle: nothing to choose
+    mb->trainerId = gTrainerBattleOpponent_A;
+    mb->battleTypeFlags = gBattleTypeFlags;
+    mb->turn = 0;
+    mb->enemyActiveSlot = gBattlerPartyIndexes[battler];
+    mb->playerActiveSlot = 0;
+    if (GetBattlerSide(battler) == B_SIDE_OPPONENT)
+    {
+        mb->playerPartyCount = CalculatePlayerPartyCount();
+        mb->enemyPartyCount = CalculateEnemyPartyCount();
+    }
+    else
+    {
+        mb->playerPartyCount = CalculateEnemyPartyCount();
+        mb->enemyPartyCount = CalculatePlayerPartyCount();
+    }
+    FillParties(mb, battler);
+    mb->respType = AGENT_RESP_NONE;
+    mb->respArg = 0;
+    mb->reqSeq++;
+    mb->romState = AGENT_ROM_REQ_READY;
+    return TRUE;
+}
+
+void AgentMailbox_ApplyLead(u8 battler, u8 slot)
+{
+    struct Pokemon tmp;
+    struct Pokemon *party = PartyOf(battler);
+    u8 cur = gBattlerPartyIndexes[battler];
+
+    if (slot >= PARTY_SIZE || slot == cur || !(BuildLeadMask(battler) & (1 << slot)))
+        return;
+    // the party order is all the rest of the battle sees: the chosen Pokemon simply starts in the lead slot
+    tmp = party[cur];
+    party[cur] = party[slot];
+    party[slot] = tmp;
+}
+
 u8 AgentMailbox_Poll(u8 battler, u8 *respType, u8 *respArg)
 {
     struct AgentMailbox *mb = AgentMailbox_For(battler);

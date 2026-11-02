@@ -31,6 +31,8 @@
 // decisionType
 #define AGENT_DECISION_TURN          1 // choose a move or a switch
 #define AGENT_DECISION_FORCED_SWITCH 2 // choose a replacement after a faint / Baton Pass
+#define AGENT_DECISION_LEAD          3 // before the first send-out: which Pokemon leads (switchMask = every
+                                       // Pokemon able to battle, enemyActiveSlot = the default lead)
 
 // respType
 #define AGENT_RESP_NONE        0
@@ -122,6 +124,8 @@ u8 AgentMailbox_Poll(u8 battler, u8 *respType, u8 *respArg);
 void AgentMailbox_RevealMove(u8 battler, u16 move);
 void AgentMailbox_RevealAbility(u8 battler, u8 ability);
 void AgentMailbox_RevealSwitchIn(u8 battler); // sent out: the other side has seen it, even if it faints at once
+bool8 AgentMailbox_TryPostLeadRequest(u8 battler); // battle intro, before the first send-out
+void AgentMailbox_ApplyLead(u8 battler, u8 slot);  // swap the chosen Pokemon into the lead slot (if legal)
 
 // battle_main.c: the player's side has locked in its actions for this turn
 bool8 TealBattle_PlayerSideConfirmed(void);

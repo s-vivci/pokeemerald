@@ -91,6 +91,7 @@ static void SpriteCB_BattleSpriteSlideLeft(struct Sprite *sprite);
 static void TurnValuesCleanUp(bool8 var0);
 static void SpriteCB_BounceEffect(struct Sprite *sprite);
 static void BattleStartClearSetData(void);
+static void BattleIntroChooseLeads(void);
 static void BattleIntroGetMonsData(void);
 static void BattleIntroPrepareBackgroundSlide(void);
 static void BattleIntroDrawTrainersOrMonsSprites(void);
@@ -3066,7 +3067,46 @@ void BeginBattleIntro(void)
 {
     BattleStartClearSetData();
     gBattleCommunication[1] = 0;
-    gBattleMainFunc = BattleIntroGetMonsData;
+    gBattleMainFunc = BattleIntroChooseLeads;
+}
+
+// Pokemon Teal: before anything is sent out, an agent-run side may pick its lead (the game keeps
+// running frames while it waits; no answer, or a bad one, keeps the usual lead)
+static EWRAM_DATA u8 sLeadPending = 0;
+
+static void BattleIntroChooseLeads(void)
+{
+    u8 i, respType, respArg, r;
+
+    if (gBattleCommunication[MULTIUSE_STATE] == 0)
+    {
+        sLeadPending = 0;
+        if (!(gBattleTypeFlags & BATTLE_TYPE_DOUBLE))
+        {
+            for (i = 0; i < gBattlersCount; i++)
+            {
+                if (AgentMailbox_TryPostLeadRequest(i))
+                    sLeadPending |= 1 << i;
+            }
+        }
+        gBattleCommunication[MULTIUSE_STATE] = 1;
+    }
+    for (i = 0; i < gBattlersCount; i++)
+    {
+        if (!(sLeadPending & (1 << i)))
+            continue;
+        r = AgentMailbox_Poll(i, &respType, &respArg);
+        if (r == AGENT_POLL_PENDING)
+            continue;
+        if (r == AGENT_POLL_READY && respType == AGENT_RESP_SWITCH)
+            AgentMailbox_ApplyLead(i, respArg);
+        sLeadPending &= ~(1 << i);
+    }
+    if (sLeadPending == 0)
+    {
+        gBattleCommunication[MULTIUSE_STATE] = 0;
+        gBattleMainFunc = BattleIntroGetMonsData;
+    }
 }
 
 static void BattleMainCB1(void)
